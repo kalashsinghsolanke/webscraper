@@ -22,18 +22,25 @@ async function fetchPage(url) {
     try {
 
         const response = await axios.get(url, {
-            timeout: 15000,
+            timeout: 20000,
             maxRedirects: 5,
+
             headers: {
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            },
+
+            validateStatus: function (status) {
+                return status < 500;
             }
         });
 
-        return response.data;
+        return response.data || "";
 
     } catch (error) {
 
         console.log("FETCH ERROR:", url);
+        console.log(error.message);
 
         return "";
     }
@@ -68,6 +75,15 @@ async function scrapeWebsite(url) {
         // =========================
 
         const homepageHtml = await fetchPage(url);
+
+        if (!homepageHtml) {
+
+            return {
+                success: false,
+                website: url,
+                error: "Failed to fetch website"
+            };
+        }
 
         const $ = cheerio.load(homepageHtml);
 
