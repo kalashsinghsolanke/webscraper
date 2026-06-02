@@ -13,25 +13,39 @@ app.get("/", (req, res) => {
 });
 
 app.post("/scrape", async (req, res) => {
-    try {
 
-        const { website, request_id } = req.body;
+try {
 
-        const data = await scrapeWebsite(website);
+    console.log("BODY:", req.body);
 
-        res.json({
-            request_id,
-            ...data
-        });
+    let { website, request_id } = req.body;
 
-    } catch (error) {
-
-        console.log(error);
-
-        res.status(500).json({
-            error: "Scraping failed"
-        });
+    if (!website.startsWith("http")) {
+        website = "https://" + website;
     }
+
+    console.log("SCRAPING:", website);
+
+    const data =
+        await scrapeWebsite(website);
+
+    console.log("SCRAPER RESULT:", data);
+
+    res.json({
+        request_id,
+        ...data
+    });
+
+} catch (error) {
+
+    console.log("ROUTE ERROR:");
+    console.log(error);
+
+    res.status(500).json({
+        error: error.message
+    });
+}
+
 });
 
 const PORT = process.env.PORT || 3000;
