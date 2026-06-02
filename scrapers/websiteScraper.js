@@ -80,8 +80,10 @@ async function scrapeWebsite(url) {
 
             return {
                 success: false,
+                error: "Website fetch failed",
                 website: url,
-                error: "Failed to fetch website"
+                emails: [],
+                phones: []
             };
         }
 
