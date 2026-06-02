@@ -143,21 +143,15 @@ async function scrapeWebsite(url) {
         // IMPORTANT PAGES
         // =========================
 
+        const visited = new Set();
+        visited.add(url.toLowerCase().replace(/\/$/, ""));
+
         const importantKeywords = [
             "contact",
             "contact-us",
             "about",
             "about-us",
-            "support",
-            "team",
-            "company",
-            "help",
-            "connect",
-            "reach-us",
-            "customer-service",
-            "careers",
-            "office",
-            "locations"
+            "team"
         ];
 
         let links = [];
@@ -236,6 +230,13 @@ async function scrapeWebsite(url) {
                     "/" +
                     link.replace(/^\//, "");
             }
+
+            const normalizedFullUrl = fullUrl.toLowerCase().replace(/\/$/, "");
+            if (visited.has(normalizedFullUrl)) {
+                console.log("ALREADY VISITED:", fullUrl);
+                continue;
+            }
+            visited.add(normalizedFullUrl);
 
             console.log("VISITING:", fullUrl);
 
