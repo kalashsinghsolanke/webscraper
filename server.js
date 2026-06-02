@@ -18,7 +18,15 @@ try {
 
     console.log("BODY:", req.body);
 
-    let { website, request_id } = req.body;
+    const body = req.body || {};
+
+    let { website, request_id } = body;
+
+    if (!website) {
+        return res.status(400).json({
+            error: "Website missing"
+        });
+    }
 
     if (!website.startsWith("http")) {
         website = "https://" + website;
