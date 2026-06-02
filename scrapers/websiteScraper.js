@@ -121,7 +121,7 @@ async function scrapeWebsite(url) {
                 website: url,
                 emails: [],
                 phones: [],
-                error: "Failed to fetch website"
+                error: "Website fetch failed"
             };
         }
 
