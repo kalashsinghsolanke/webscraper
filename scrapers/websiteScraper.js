@@ -3,26 +3,64 @@ const cheerio = require("cheerio");
 
 async function extractEmails(text) {
 
-    const emailRegex =
-        /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+    if (!text) return [];
 
-    return [...new Set(text.match(emailRegex) || [])];
+    const emailRegex =
+        /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
+
+    const matches = text.match(emailRegex) || [];
+
+    const validEmails = matches.filter(email => {
+        const lower = email.toLowerCase();
+        return !lower.endsWith(".png") &&
+               !lower.endsWith(".jpg") &&
+               !lower.endsWith(".jpeg") &&
+               !lower.endsWith(".gif") &&
+               !lower.endsWith(".webp") &&
+               !lower.endsWith(".svg") &&
+               !lower.endsWith("example.com") &&
+               !lower.endsWith("w3.org") &&
+               !lower.endsWith("bootstrap.com") &&
+               !lower.includes("sentry.io");
+    });
+
+    return [...new Set(validEmails)];
 }
 
 async function extractPhones(text) {
 
-    const phoneRegex =
-        /(?:\+91[\s-]?)?[6-9]\d{9}/g;
+    if (!text) return [];
 
-    return [...new Set(text.match(phoneRegex) || [])];
+    // Captures 10-digit Indian mobile numbers with optional spaces/hyphens
+    const phoneRegex = /(?:\+?91[\s-]?)?[6-9]\d{2}[\s-]?\d{3}[\s-]?\d{4}/g;
+
+    const matches = text.match(phoneRegex) || [];
+
+    const cleaned = matches.map(num => {
+        let clean = num.replace(/[^\d+]/g, "");
+        if (clean.startsWith("+91")) {
+            clean = clean.slice(3);
+        } else if (clean.startsWith("91") && clean.length === 12) {
+            clean = clean.slice(2);
+        } else if (clean.startsWith("0") && clean.length === 11) {
+            clean = clean.slice(1);
+        }
+        return clean;
+    });
+
+    return [...new Set(cleaned.filter(num => num.length === 10))];
 }
 
 async function fetchPage(url) {
 
     try {
 
+        console.log("FETCHING:", url);
+
         const response = await axios.get(url, {
-            timeout: 20000,
+
+            timeout: 15000,
+
             maxRedirects: 5,
 
             headers: {
@@ -76,14 +114,14 @@ async function scrapeWebsite(url) {
 
         const homepageHtml = await fetchPage(url);
 
-        if (!homepageHtml) {
+        if (!homepageHtml || homepageHtml.length < 50) {
 
             return {
                 success: false,
-                error: "Website fetch failed",
                 website: url,
                 emails: [],
-                phones: []
+                phones: [],
+                error: "Failed to fetch website"
             };
         }
 
@@ -203,14 +241,16 @@ async function scrapeWebsite(url) {
 
             const pageHtml = await fetchPage(fullUrl);
 
-            const $$ = cheerio.load(pageHtml);
+            if (pageHtml) {
+                const $$ = cheerio.load(pageHtml);
+                const pageText = $$("body").text();
 
-            const pageText = $$("body").text();
+                const pageEmails = await extractEmails(pageText);
+                allEmails.push(...pageEmails);
 
-            const pageEmails =
-                await extractEmails(pageText);
-
-            allEmails.push(...pageEmails);
+                const pagePhones = await extractPhones(pageText);
+                phones.push(...pagePhones);
+            }
         }
 
         // REMOVE DUPLICATES
