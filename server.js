@@ -15,11 +15,14 @@ app.get("/", (req, res) => {
 app.post("/scrape", async (req, res) => {
     try {
 
-        const { website } = req.body;
+        const { website, request_id } = req.body;
 
         const data = await scrapeWebsite(website);
 
-        res.json(data);
+        res.json({
+            request_id,
+            ...data
+        });
 
     } catch (error) {
 

@@ -12,7 +12,7 @@ async function extractEmails(text) {
 async function extractPhones(text) {
 
     const phoneRegex =
-        /(\+?\d[\d\s\-()]{7,}\d)/g;
+        /(?:\+91[\s-]?)?[6-9]\d{9}/g;
 
     return [...new Set(text.match(phoneRegex) || [])];
 }
@@ -23,6 +23,7 @@ async function fetchPage(url) {
 
         const response = await axios.get(url, {
             timeout: 15000,
+            maxRedirects: 5,
             headers: {
                 "User-Agent": "Mozilla/5.0"
             }
@@ -200,13 +201,15 @@ async function scrapeWebsite(url) {
         return {
             success: true,
             website: url,
+            email: allEmails[0] || "",
             emails: [...new Set(allEmails)],
+            phone: phones[0] || "",
+            phones: [...new Set(phones)],
             linkedin,
             instagram,
             facebook,
             twitter,
-            youtube,
-            phones: [...new Set(phones)]
+            youtube
         };
 
     } catch (error) {
